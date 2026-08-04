@@ -16,7 +16,10 @@ WHAT IT DOES
 - Fully automatic: enables itself when a menu is open and
   disables itself when you go back to gameplay (camera
   controls stay untouched).
-- Manual override with F11 if you ever need it.
+- AUTO-WALK: press F2 to make your character keep running
+  forward by itself (no need to hold the stick). Touch the
+  left stick to cancel.
+- Manual menu override with F11 if you ever need it.
 
 This mod is designed for people who cannot comfortably use
 the D-pad (or keyboard) but want to keep playing with the
@@ -82,9 +85,17 @@ CONTROLS
 ----------------------------------------------------------
   Left stick (in menus)  navigate
   F11                    cycle: auto -> force ON -> force OFF -> auto
+  F2                     toggle auto-walk ON/OFF
 
 F11 is only a manual override. In normal use you never need
 it: the mod auto-detects when a menu is open.
+
+AUTO-WALK
+----------------------------------------------------------
+While auto-walk is ON (and you are in gameplay, not in a
+menu), the left stick is forced fully forward so your
+character keeps running on its own. To stop, just touch or
+nudge the left stick - auto-walk disengages automatically.
 
 HOW IT WORKS (for the curious)
 ----------------------------------------------------------

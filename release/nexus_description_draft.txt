@@ -31,6 +31,8 @@ FEATURES
 - Gameplay untouched: while playing, the left stick is 100% camera/movement.
   The mod switches on automatically when a menu opens and back off when
   you return to the game.
+- AUTO-WALK: press F2 and your character keeps running forward by itself.
+  Touch the left stick to disengage. Great for long travel stretches.
 - Fully automatic, zero configuration.
 - Manual override with F11 if you ever need it.
 - Optional LT toggle plugin included (Steam-Input style).
@@ -70,9 +72,16 @@ XINPUT1_3.dll is not part of the base game, so removing it fully restores
 the original behavior.
 
 CONTROLS
-----------------------------------------------------------------
+---------------------------------------------------------------
   Left stick (in menus)   navigate
   F11                     cycle: auto -> force ON -> force OFF -> auto
+  F2                      toggle auto-walk ON/OFF
+
+AUTO-WALK
+---------------------------------------------------------------
+With auto-walk ON (in gameplay, outside menus), the left stick is held
+forward for you so the character keeps running. Nudge the stick to stop -
+auto-walk turns itself off automatically.
 
 NOTE ON ANTIVIRUS
 ----------------------------------------------------------------
@@ -110,6 +119,11 @@ The First Berserker: Khazan (UE 4.27).
 --------------------------------------------------------------------------
  5) VERSION / CHANGE LOG (for the first upload)
 --------------------------------------------------------------------------
+v2.0
+- NEW: auto-walk toggle (F2). Your character keeps running forward with
+  no input; touch the left stick to cancel.
+- Left-stick menu navigation and all v1.0 features unchanged.
+
 v1.0
 - Initial release. Left-stick menu navigation with auto-scroll,
   automatic menu detection, F11 manual override, optional LT toggle.

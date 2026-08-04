@@ -12,6 +12,8 @@ em modo gamepad (sem que o jogo mude para a UI de teclado/mouse).
   "autoscrollar" enquanto o stick é mantido inclinado — parece nativo.
 - O modo do menu é detectado automaticamente e também pode ser alternado
   manualmente com **F11**.
+- **Auto-walk**: tecla **F2** liga/desliga o personagem correndo sozinho
+  (stick esquerdo forçado pra frente); tocar no stick cancela.
 
 ## Componentes
 
@@ -44,7 +46,11 @@ khazan-mod/
 3. **O proxy** lê `menu_open.flag` a cada `XInputGetState`. Se o flag estiver
    `'1'`, converte o analógico esquerdo em D-pad com histerese e **pulso**
    (110ms press / 50ms gap), zerando o stick para não haver dupla rolagem.
-4. **`LT_Toggle.dll`** (opcional, plugin) recebe o estado do gamepad via
+4. **Auto-walk**: o proxy lê `autorun.flag`. Se estiver `'1'` e o menu
+   estiver fechado, força `sThumbLY = 32767` (todo pra frente). Se o jogador
+   mexer no stick (magnitude >= 8000), o proxy **limpa o flag** e desliga.
+   O `main.lua` grava/limpa esse flag via F2.
+5. **`LT_Toggle.dll`** (opcional, plugin) recebe o estado do gamepad via
    `KhazanLT_OnGamepadState` e alterna o estado virtual do LT em edge detect —
    função independente, não afeta o menu.
 
@@ -71,10 +77,12 @@ referência em `backup/ue4ss_v3.0.1_release/`).
 | Tecla | Ação |
 |-------|------|
 | `F11` | Cicla override manual: auto → ON → OFF → auto |
+| `F2`  | Liga/desliga auto-walk (escreve `autorun.flag` para o proxy) |
 | `F5`  | Dump de todos os controllers/pawns (diagnóstico) |
 | `F6`  | Dump das UFunctions de input/pause/menu do PlayerController |
 | `F7`  | Dump de instâncias de UserWidget (menus) |
 | `F9`  | Teste isolado de `GetInputAnalogStickState` (apenas no gameplay) |
+| `F12` | Dump de mappings de input do PlayerInput (diagnóstico) |
 
 ## Detalhes técnicos relevantes
 
@@ -97,6 +105,14 @@ referência em `backup/ue4ss_v3.0.1_release/`).
 - **Pulse vs segurar**: menus UE4/UMG respondem a transições key-down/key-up;
   segurar o d-pad gerava 1 passo só. O pulso gera key-downs repetidos →
   autoscroll.
+- **Auto-walk cancela ao tocar no stick**: o proxy detecta magnitude do stick
+  esquerdo >= 8000 e limpa o `autorun.flag` (não só desativa o forçamento).
+  Assim o toggle de F2 não fica "preso" — retomar o controle desliga sozinho.
+- **Mappings de input não acessíveis**: `PlayerInput.ActionMappings`/
+  `AxisMappings` retornam `TrivialObject` — o jogo remove essas propriedades da
+  reflection (sobra só `DebugExecBindings`/`InvertedAxis` no `UPlayerInput`).
+  O input do jogo é custom/não-refletido; por isso o toggle usa tecla do
+  teclado (F2) em vez de um botão do gamepad.
 
 ## Ajustes de afinação
 
