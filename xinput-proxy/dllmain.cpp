@@ -31,6 +31,7 @@ typedef void(WINAPI *KhazanLT_OnGamepadState_t)(XINPUT_STATE* pState);
 static KhazanLT_OnGamepadState_t g_pfn_KhazanLT = NULL;
 
 void ApplyStickToDPad(XINPUT_STATE* pState);
+void ApplyAutorun(XINPUT_STATE* pState);
 
 X_IMPL(DWORD, XInputGetState, (DWORD dwUserIndex, XINPUT_STATE* pState)) {
     if (!g_pfn_XInputGetState) return ERROR_DEVICE_NOT_CONNECTED;
@@ -38,6 +39,7 @@ X_IMPL(DWORD, XInputGetState, (DWORD dwUserIndex, XINPUT_STATE* pState)) {
     if (r == ERROR_SUCCESS && pState) {
         if (g_pfn_KhazanLT) g_pfn_KhazanLT(pState);
         ApplyStickToDPad(pState);
+        ApplyAutorun(pState);
     }
     return r;
 }
@@ -48,6 +50,7 @@ X_IMPL(DWORD, XInputGetStateEx, (DWORD dwUserIndex, XINPUT_STATE* pState)) {
     if (r == ERROR_SUCCESS && pState) {
         if (g_pfn_KhazanLT) g_pfn_KhazanLT(pState);
         ApplyStickToDPad(pState);
+        ApplyAutorun(pState);
     }
     return r;
 }
@@ -91,16 +94,55 @@ X_IMPL(DWORD, XInputGetAudioDeviceIds, (DWORD dwUserIndex, LPWSTR pRenderDeviceI
 // ---------------------------------------------------------------------------
 
 static wchar_t g_flagPath[MAX_PATH] = L"";
+static wchar_t g_autorunPath[MAX_PATH] = L"";
 
-static BOOL IsMenuOpen() {
-    if (g_flagPath[0] == L'\0') return FALSE;
-    HANDLE h = CreateFileW(g_flagPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+static BOOL ReadFlag(const wchar_t* path) {
+    if (!path || path[0] == L'\0') return FALSE;
+    HANDLE h = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (h == INVALID_HANDLE_VALUE) return FALSE;
     char buf[8] = { 0 };
     DWORD read = 0;
     ReadFile(h, buf, sizeof(buf) - 1, &read, NULL);
     CloseHandle(h);
     return buf[0] == '1';
+}
+
+static void WriteFlag(const wchar_t* path, BOOL on) {
+    if (!path || path[0] == L'\0') return;
+    HANDLE h = CreateFileW(path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (h != INVALID_HANDLE_VALUE) {
+        DWORD written = 0;
+        WriteFile(h, on ? "1" : "0", 1, &written, NULL);
+        CloseHandle(h);
+    }
+}
+
+static BOOL IsMenuOpen() {
+    return ReadFlag(g_flagPath);
+}
+
+static BOOL IsAutorun() {
+    return ReadFlag(g_autorunPath);
+}
+
+// Auto-walk: while active (and not in a menu) force the left stick fully
+// forward so the character walks/runs by itself. If the player deflects the
+// left stick beyond the deadzone, the auto-walk disengages (flag cleared).
+void ApplyAutorun(XINPUT_STATE* pState) {
+    if (!pState || !IsAutorun() || IsMenuOpen()) return;
+
+    SHORT lx = pState->Gamepad.sThumbLX;
+    SHORT ly = pState->Gamepad.sThumbLY;
+    const int DEADZONE = 8000;
+
+    if (lx * lx + ly * ly >= DEADZONE * DEADZONE) {
+        // Player grabbed the stick: cancel auto-walk.
+        WriteFlag(g_autorunPath, FALSE);
+        return;
+    }
+
+    pState->Gamepad.sThumbLX = 0;
+    pState->Gamepad.sThumbLY = 32767;
 }
 
 // Converts left-stick deflection into D-pad buttons (with hysteresis), so the
@@ -169,6 +211,7 @@ static void BuildFlagPath() {
     wchar_t* slash = wcsrchr(exePath, L'\\');
     if (slash) *(slash + 1) = L'\0';
     wsprintfW(g_flagPath, L"%s%s", exePath, L"menu_open.flag");
+    wsprintfW(g_autorunPath, L"%s%s", exePath, L"autorun.flag");
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID) {

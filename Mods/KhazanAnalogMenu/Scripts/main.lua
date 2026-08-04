@@ -311,6 +311,36 @@ RegisterKeyBind(Key.F11, function()
     SetManualState((ManualState + 1) % 3)
 end)
 
+-- ---------------------------------------------------------------------------
+-- Auto-walk toggle (F2): writes autorun.flag for the XINPUT1_3.dll proxy.
+-- When ON and the menu is closed, the proxy forces the left stick forward so
+-- the character keeps walking; touching the stick disengages it (proxy clears
+-- the flag). Pure file write, no game calls -> safe.
+-- ---------------------------------------------------------------------------
+
+local AUTORUN_FLAG_PATH = "D:\\Games\\The First Berserker - Khazan\\BBQ\\Binaries\\Win64\\autorun.flag"
+
+local function WriteAutorunFlag(on)
+    local ok, f = pcall(function() return io.open(AUTORUN_FLAG_PATH, "w") end)
+    if ok and f then
+        f:write(on and "1" or "0")
+        f:close()
+        return true
+    end
+    return false
+end
+
+local AutorunOn = false
+
+RegisterKeyBind(Key.F2, function()
+    AutorunOn = not AutorunOn
+    if WriteAutorunFlag(AutorunOn) then
+        print(string.format("[F2] auto-walk -> %s", AutorunOn and "ON" or "OFF"))
+    else
+        print("[F2] could not write autorun.flag")
+    end
+end)
+
 -- F9: isolated test of the function suspected of crashing (GetInputAnalogStickState).
 -- Run it ONLY inside gameplay (with a loaded save). If it crashes the game, we know
 -- that primitive is unusable and stickState is abandoned in favor of analogKey.
@@ -384,6 +414,110 @@ RegisterKeyBind(Key.F8, function()
     end
 end)
 
+-- F12: dump the game's input Action/Axis mappings so we can pick a gamepad
+-- button that the game does NOT use (for the auto-walk toggle). Pure property
+-- reflection via PlayerInput.ActionMappings / AxisMappings (safe reads; no
+-- input UFUNCTION calls, which are the ones that crash).
+RegisterKeyBind(Key.F12, function()
+    local pc = FindBestPC()
+    if not pc then print("[F12] no-pc") return end
+    local okPI, pi = pcall(function() return pc.PlayerInput end)
+    if not okPI or not pi then
+        print("[F12] no PlayerInput (outside gameplay?)")
+        return
+    end
+
+    -- Convert a read value to a string defensively (FName may marshal as
+    -- string directly, or as an object needing :ToString()).
+    local function valStr(v)
+        if type(v) == "string" then return v end
+        local ok, s = pcall(function() return v:ToString() end)
+        if ok and s then return tostring(s) end
+        return tostring(v)
+    end
+
+    -- Identify the value we got from pc.PlayerInput
+    local okPIv, piv = pcall(function() return pi:IsValid() end)
+    local okPIp, pip = pcall(function() return pi:GetFullName() end)
+    local okPIt, pit = pcall(function() return pi:type() end)
+    print("[F12] pi: type=" .. type(pi) ..
+          " | IsValid=" .. tostring(okPIv and piv) ..
+          " | FullName=" .. tostring(okPIp and pip) ..
+          " | :type()=" .. tostring(okPIt and pit))
+
+    -- Is the whole controller valid?
+    local okPCv, pcv = pcall(function() return pc:IsValid() end)
+    local okPCf, pcf = pcall(function() return pc:GetFullName() end)
+    print("[F12] pc: IsValid=" .. tostring(okPCv and pcv) .. " | FullName=" .. tostring(okPCf and pcf))
+
+    -- Enumerate every reflected property on the PlayerInput class so we can see
+    -- whether ActionMappings/AxisMappings exist at all (and under what names).
+    local okPIc, pic = pcall(function() return pi:GetClass() end)
+    if okPIc and pic then
+        local okName, piName = pcall(function() return pic:GetFullName() end)
+        print("[F12] pi class: " .. tostring(okName and piName))
+        local okFE, fe = pcall(function()
+            local names = {}
+            pic:ForEachProperty(function(prop)
+                local okN, n = pcall(function() return prop:GetFullName() end)
+                local okO, o = pcall(function() return prop:GetOffset_Internal() end)
+                table.insert(names, tostring(okN and n) .. "@" .. tostring(okO and o))
+            end)
+            return table.concat(names, ", ")
+        end)
+        if okFE then
+            print("[F12]   props: " .. tostring(fe))
+        else
+            print("[F12]   props ERR: " .. tostring(fe))
+        end
+    else
+        print("[F12] pi:GetClass() failed: " .. tostring(pic))
+    end
+
+    local function dumpMappings(label, arr)
+        print("[F12] " .. label .. ": type=" .. type(arr))
+        local okLen, n = pcall(function() return #arr end)
+        if okLen then
+            print("   count=" .. tostring(n))
+        else
+            print("   # -> ERR (" .. tostring(n) .. ")")
+        end
+        local okGet, g = pcall(function() return arr:get() end)
+        if okGet then
+            print("   :get() -> type=" .. type(g))
+        else
+            print("   :get() -> ERR (" .. tostring(g) .. ")")
+        end
+        local okForEach, fe = pcall(function()
+            local out = {}
+            arr:ForEach(function(idx, elem)
+                local okG2, st = pcall(function() return elem:get() end)
+                table.insert(out, string.format("[%d] elem:get()=%s", idx, okG2 and tostring(st) or "<err>"))
+            end)
+            return table.concat(out, " | ")
+        end)
+        if okForEach then
+            print("   ForEach: " .. tostring(fe))
+        else
+            print("   ForEach ERR: " .. tostring(fe))
+        end
+    end
+
+    local okA, actions = pcall(function() return pi.ActionMappings end)
+    if okA then
+        dumpMappings("ActionMappings", actions)
+    else
+        print("[F12] ActionMappings read ERR: " .. tostring(actions))
+    end
+
+    local okAx, axes = pcall(function() return pi.AxisMappings end)
+    if okAx then
+        dumpMappings("AxisMappings", axes)
+    else
+        print("[F12] AxisMappings read ERR: " .. tostring(axes))
+    end
+end)
+
 -- ---------------------------------------------------------------------------
 -- Startup banner / instructions
 -- ---------------------------------------------------------------------------
@@ -394,5 +528,6 @@ print(" Steps:")
 print("  1) Start the game with the XINPUT1_3.dll proxy in the Win64 folder.")
 print("  2) Enter a real PAUSE MENU during gameplay (auto flag = bShowMouseCursor).")
 print("  3) F11 cycles auto -> ON -> OFF -> auto (manual override).")
-print("  4) Use the LEFT STICK to navigate; F5 (dump controllers), F7 (widgets).")
+print("  4) F2 toggles AUTO-WALK (proxy forces left stick forward).")
+print("  5) Use the LEFT STICK to navigate; F5 (dump controllers), F7 (widgets).")
 print("================================================================")
