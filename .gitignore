@@ -1,0 +1,19 @@
+# Compiled / build artifacts
+*.dll
+*.obj
+*.lib
+*.exp
+
+# Generated release archive (regenerable from source)
+release/*.zip
+
+# Third-party UE4SS backup (downloadable, not our source)
+backup/
+
+# Logs / crash dumps
+*.log
+*.dmp
+
+# Editor / OS noise
+Thumbs.db
+.DS_Store

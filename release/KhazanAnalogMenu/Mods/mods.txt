@@ -1,0 +1,11 @@
+; KhazanAnalogMenu - analog stick menu navigation for The First Berserker: Khazan
+; Enable only this mod for a fresh UE4SS install.
+;
+; NOTE: If you already have a Mods/mods.txt in your game, do NOT overwrite it.
+; Instead, open your existing mods.txt and add this line:
+;     KhazanAnalogMenu : 1
+;
+KhazanAnalogMenu : 1
+
+; Built-in keybinds, do not move up!
+Keybinds : 1

@@ -1,0 +1,115 @@
+================================================================
+ KHANZAN ANALOG MENU - NEXUS PAGE DRAFT
+ (short description, long description, tags, requirements, credits)
+================================================================
+
+--------------------------------------------------------------------------
+ 1) SHORT DESCRIPTION (one line - used as the mod subtitle)
+--------------------------------------------------------------------------
+Navigate every menu with the LEFT STICK instead of the D-pad in
+The First Berserker: Khazan. Auto-scroll, gamepad UI stays native.
+
+(Alternative, shorter: "Use the left analog stick to navigate all menus in
+The First Berserker: Khazan - keeps the native gamepad UI.")
+
+--------------------------------------------------------------------------
+ 2) LONG DESCRIPTION (paste into the Description tab)
+--------------------------------------------------------------------------
+Khazan Analog Menu lets you navigate every menu in The First Berserker:
+Khazan (pause, inventory, skills, gear, map, options...) with the LEFT
+ANALOG STICK, and it does it without ever kicking the game out of its
+native gamepad UI.
+
+Made for players who find the D-pad (or keyboard) hard or impossible to
+use, but still want to keep the original controller experience.
+
+FEATURES
+----------------------------------------------------------------
+- LEFT STICK = D-pad inside every menu. Navigate any menu with the stick.
+- Auto-scroll: hold the stick to keep moving through items - it feels
+  native, like holding a D-pad on a real gamepad.
+- Gameplay untouched: while playing, the left stick is 100% camera/movement.
+  The mod switches on automatically when a menu opens and back off when
+  you return to the game.
+- Fully automatic, zero configuration.
+- Manual override with F11 if you ever need it.
+- Optional LT toggle plugin included (Steam-Input style).
+
+HOW IT WORKS
+----------------------------------------------------------------
+The mod ships a small XInput proxy (XINPUT1_3.dll). While a menu is open,
+it translates left-stick deflection into D-pad presses, with a pulse so
+menus auto-scroll and hysteresis so the direction is stable and jitter-free.
+A lightweight UE4SS Lua script watches the game's menu state and flips a
+tiny flag file that the proxy reads every poll. When no menu is open, the
+input is passed through completely untouched.
+
+INSTALLATION
+----------------------------------------------------------------
+This download INCLUDES UE4SS, so it works on a fresh install.
+
+1. Find your game folder, e.g.:
+   ...\Steam\steamapps\common\The First Berserker - Khazan\
+   and go to:
+   BBQ\Binaries\Win64\
+2. Copy the CONTENTS of the archive into that Win64 folder.
+3. Launch the game, open a menu, and use the LEFT STICK.
+
+Installing alongside other UE4SS mods?
+- Do NOT overwrite your existing Mods\mods.txt.
+- Copy XINPUT1_3.dll and LT_Toggle.dll into Win64.
+- Copy the Mods\KhazanAnalogMenu folder into your existing Mods folder.
+- Add this line to your Mods\mods.txt:
+      KhazanAnalogMenu : 1
+
+UNINSTALL
+----------------------------------------------------------------
+- Delete XINPUT1_3.dll and LT_Toggle.dll from BBQ\Binaries\Win64\.
+- (Optional) remove Mods\KhazanAnalogMenu and the mods.txt line.
+XINPUT1_3.dll is not part of the base game, so removing it fully restores
+the original behavior.
+
+CONTROLS
+----------------------------------------------------------------
+  Left stick (in menus)   navigate
+  F11                     cycle: auto -> force ON -> force OFF -> auto
+
+NOTE ON ANTIVIRUS
+----------------------------------------------------------------
+This mod ships DLL files (a proxy DLL and the UE4SS loader). Some
+antivirus products flag DLL proxies as suspicious. If your AV quarantines
+anything, add an exception. The DLLs only forward XInput gamepad input and
+read/write a small text flag file - nothing else.
+
+CREDITS / THANKS
+----------------------------------------------------------------
+- UE4SS project (Ultimate Unreal Engine Scripting System) - the Lua mod
+  loader used here.
+- Khazan was built on Unreal Engine 4.27.
+
+FEEDBACK
+----------------------------------------------------------------
+Found a bug or a menu that doesn't react to the stick? Check UE4SS.log in
+the Win64 folder (it contains the mod's diagnostics) and share it when you
+report the issue. Constructive feedback is very welcome.
+
+Enjoy the game!
+
+--------------------------------------------------------------------------
+ 3) TAGS (pick the relevant ones on the Nexus category/tags page)
+--------------------------------------------------------------------------
+suggested: accessibility, controller, gamepad, usability, input
+category suggestion: "User Interface" or "Utilities"
+
+--------------------------------------------------------------------------
+ 4) REQUIREMENTS section (optional, shown as a list)
+--------------------------------------------------------------------------
+None required - UE4SS is bundled. The game must be a recent build of
+The First Berserker: Khazan (UE 4.27).
+
+--------------------------------------------------------------------------
+ 5) VERSION / CHANGE LOG (for the first upload)
+--------------------------------------------------------------------------
+v1.0
+- Initial release. Left-stick menu navigation with auto-scroll,
+  automatic menu detection, F11 manual override, optional LT toggle.
